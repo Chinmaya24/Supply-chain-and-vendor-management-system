@@ -1,0 +1,195 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Vendor Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Dashboard Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Vendor Dashboard</h1>
+            <p class="text-gray-600 dark:text-gray-300 mt-2">Browse and order available commodities</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-3">
+            <a href="{% url 'order_request' %}" class="btn btn-warning gap-2">
+                <i class="fas fa-clipboard-list"></i>
+                Order Requests
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} shadow-lg animate-fade-in">
+            <div>
+                {% if message.tags == "success" %}
+                    <i class="fas fa-check-circle"></i>
+                {% elif message.tags == "error" %}
+                    <i class="fas fa-exclamation-circle"></i>
+                {% else %}
+                    <i class="fas fa-info-circle"></i>
+                {% endif %}
+                <span>{{ message }}</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Search Form -->
+    <div class="card bg-base-100 shadow-sm mb-8">
+        <div class="card-body">
+            <form method="GET" action="{% url 'vendor_dashboard' %}">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="form-control flex-grow">
+                        <div class="input-group">
+                            <input type="text" name="search" class="input input-bordered w-full" 
+                                   placeholder="Search commodities..." value="{{ query|default_if_none:'' }}">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Commodities Grid -->
+    <h2 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">Available Commodities</h2>
+    
+    {% if supplier_commodities %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in supplier_commodities %}
+        <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
+            <div class="card-body">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-12">
+                            <span class="text-xl">{{ item.commodity.name|first|upper }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="card-title text-lg">{{ item.commodity.name }}</h3>
+                        <div class="text-sm text-gray-500">ID: {{ item.id }}</div>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-user-tie text-gray-500"></i>
+                        <span>{{ item.supplier.username }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-map-marker-alt text-gray-500"></i>
+                        <span>{{ item.supplier.address }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-tag text-gray-500"></i>
+                        <span class="font-semibold">₹{{ item.price_per_unit }}</span>
+                        <span class="text-sm text-gray-500">per unit</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-boxes text-gray-500"></i>
+                        <span class="badge {% if item.available_units < 10 %}badge-error{% elif item.available_units < 50 %}badge-warning{% else %}badge-success{% endif %}">
+                            {{ item.available_units }} available
+                        </span>
+                    </div>
+                </div>
+                
+                <form method="POST" action="{% url 'place_order' item.id %}" class="mt-auto">
+                    {% csrf_token %}
+                    <div class="flex gap-2">
+                        <input type="number" name="quantity" class="input input-bordered flex-grow"
+                               placeholder="Quantity" min="1" max="{{ item.available_units }}" required>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <div class="text-center py-8">
+                <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-xl font-medium text-gray-600">No commodities found</h3>
+                <p class="text-gray-500 mt-2">Try adjusting your search or check back later</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if supplier_commodities.has_other_pages %}
+    <div class="flex justify-center mt-8">
+        <div class="btn-group">
+            {% if supplier_commodities.has_previous %}
+            <a href="?page={{ supplier_commodities.previous_page_number }}{% if query %}&search={{ query }}{% endif %}" class="btn">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            {% for i in supplier_commodities.paginator.page_range %}
+            {% if supplier_commodities.number == i %}
+            <a class="btn btn-active">{{ i }}</a>
+            {% else %}
+            <a href="?page={{ i }}{% if query %}&search={{ query }}{% endif %}" class="btn">{{ i }}</a>
+            {% endif %}
+            {% endfor %}
+            
+            {% if supplier_commodities.has_next %}
+            <a href="?page={{ supplier_commodities.next_page_number }}{% if query %}&search={{ query }}{% endif %}" class="btn">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Custom animations */
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Hover effects for cards */
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
+<script>
+    // Simple quantity validation
+    document.querySelectorAll('input[name="quantity"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const max = parseInt(this.max);
+            if (this.value > max) {
+                this.value = max;
+            }
+            if (this.value < 1) {
+                this.value = 1;
+            }
+        });
+    });
+</script>
+{% endblock %}
