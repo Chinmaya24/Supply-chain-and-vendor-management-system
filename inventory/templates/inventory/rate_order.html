@@ -1,0 +1,168 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+            <i class="fas fa-star text-2xl text-primary"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Rate Your Experience</h1>
+        <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto">Help us improve by sharing your feedback about this order</p>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl border border-gray-100 dark:border-gray-700">
+        <div class="card-body p-6 md:p-8">
+            <!-- Order Summary -->
+            <div class="flex flex-col md:flex-row gap-6 mb-8 p-4 bg-base-200 dark:bg-base-300 rounded-lg">
+                <div class="avatar flex-shrink-0">
+                    <div class="w-16 rounded-full bg-primary text-primary-content flex items-center justify-center">
+                        <span class="text-2xl font-bold">{{ order.supplier_commodity.commodity.name|first|upper }}</span>
+                    </div>
+                </div>
+                <div class="flex-grow">
+                    <h2 class="text-xl font-semibold mb-2">{{ order.supplier_commodity.commodity.name }}</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="badge badge-ghost p-2">
+                                <i class="fas fa-user-tie text-gray-500"></i>
+                            </div>
+                            <span>{{ order.supplier_commodity.supplier.username }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="badge badge-ghost p-2">
+                                <i class="fas fa-boxes text-gray-500"></i>
+                            </div>
+                            <span>{{ order.quantity_requested }} units ordered</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="badge badge-ghost p-2">
+                                <i class="fas fa-calendar-day text-gray-500"></i>
+                            </div>
+                            <span>{{ order.ordered_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="badge badge-ghost p-2">
+                                <i class="fas fa-tag text-gray-500"></i>
+                            </div>
+                            <span>₹{{ order.supplier_commodity.price_per_unit|floatformat:2 }} per unit</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Rating Section -->
+                <div class="space-y-4">
+                    <label class="block text-lg font-semibold">How would you rate this order?</label>
+                    
+                    <div class="flex flex-col items-center space-y-4">
+                        <!-- Stars -->
+                        <div class="rating rating-lg rating-half">
+                            {% for i in "12345" %}
+                                <input type="radio" name="rating" id="rating-{{ forloop.counter0|add:0.5 }}" value="{{ forloop.counter0|add:0.5 }}" class="bg-yellow-400 mask mask-star-2 mask-half-1" />
+                                <input type="radio" name="rating" id="rating-{{ forloop.counter }}" value="{{ forloop.counter }}" class="bg-yellow-400 mask mask-star-2 mask-half-2" />
+                            {% endfor %}
+                        </div>
+
+                        <!-- Labels perfectly aligned under each star -->
+                        <div class="grid grid-cols-5 gap-2 text-center w-full text-xs text-gray-500">
+                            <span>Very Poor</span>
+                            <span>Poor</span>
+                            <span>Fair</span>
+                            <span>Good</span>
+                            <span>Excellent</span>
+                        </div>
+
+                        <!-- Rating feedback -->
+                        <div id="ratingFeedback" class="text-primary font-bold hidden text-lg">
+                            <span id="ratingValue"></span> stars - <span id="ratingText"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comment Section -->
+                <div class="space-y-4">
+                    <label for="comment" class="block text-lg font-semibold">Tell us more</label>
+                    <div class="relative">
+                        <textarea id="comment" name="comment" rows="5"
+                            class="textarea textarea-bordered w-full pt-3 pl-4 pr-12"
+                            placeholder="What stood out about this order? Were there any issues? Your feedback helps us improve..."></textarea>
+                        <div class="absolute bottom-3 right-3 text-gray-400">
+                            <i class="fas fa-comment-alt"></i>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500">Your comments will be shared anonymously with the supplier</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row justify-end gap-3 pt-6">
+                    <a href="" class="btn btn-outline btn-ghost">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Orders
+                    </a>
+                    <button type="submit" class="btn btn-primary gap-2">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .rating input:hover {
+        transform: scale(1.1);
+        transition: 0.2s ease;
+    }
+
+    .rating input:checked ~ label {
+        animation: pulse 0.5s ease;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+
+    textarea {
+        min-height: 120px;
+    }
+</style>
+
+<script>
+    const radios = document.querySelectorAll('input[name="rating"]');
+    const feedback = document.getElementById('ratingFeedback');
+    const ratingValue = document.getElementById('ratingValue');
+    const ratingText = document.getElementById('ratingText');
+
+    const descriptions = {
+        '0.5': 'Very Poor',
+        '1': 'Poor',
+        '1.5': 'Below Fair',
+        '2': 'Fair',
+        '2.5': 'Almost Good',
+        '3': 'Good',
+        '3.5': 'Very Good',
+        '4': 'Great',
+        '4.5': 'Almost Excellent',
+        '5': 'Excellent'
+    };
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            feedback.classList.remove('hidden');
+            ratingValue.textContent = this.value;
+            ratingText.textContent = descriptions[this.value] || '';
+        });
+    });
+
+    // Auto-expand textarea
+    document.getElementById('comment').addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+</script>
+{% endblock %}

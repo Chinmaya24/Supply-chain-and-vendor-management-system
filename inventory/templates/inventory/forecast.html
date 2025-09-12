@@ -1,0 +1,118 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+  <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Demand Forecast</h1>
+    <p class="text-gray-600 mb-6">Generated on {{ now }}</p>
+    
+    <div class="grid gap-8">
+      {% for item in predictions %}
+        <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+              <span class="bg-blue-100 text-blue-800 p-2 rounded-full mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z" clip-rule="evenodd" />
+                </svg>
+              </span>
+              {{ item.commodity }}
+            </h2>
+            <span class="px-3 py-1 rounded-full text-sm font-medium 
+              {% if item.status == 'ok' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+              {% if item.status == 'ok' %}Forecast Available{% else %}Insufficient Data{% endif %}
+            </span>
+          </div>
+
+          {% if item.status == "insufficient" %}
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm text-yellow-700">
+                    We need at least 5 historical orders to generate a forecast for {{ item.commodity }}.
+                  </p>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <!-- Insight Card - Added at the top before the forecast sections -->
+            {% if item.insight %}
+            <div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-blue-800">Key Insight</h3>
+                  <div class="mt-1 text-sm text-blue-700">
+                    <p>{{ item.insight }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Graph Section -->
+              <div class="bg-white p-4 rounded-lg border border-gray-200">
+                <h3 class="text-lg font-medium text-gray-800 mb-3">Demand Forecast Trend</h3>
+                <div class="aspect-w-16 aspect-h-9">
+                  <img src="data:image/png;base64,{{ item.graph }}" alt="Demand forecast for {{ item.commodity }}" 
+                       class="w-full h-auto object-contain">
+                </div>
+                <p class="text-sm text-gray-500 mt-2">
+                  The shaded area represents the uncertainty interval of the forecast.
+                </p>
+              </div>
+
+              <!-- Table Section -->
+              <div class="bg-white p-4 rounded-lg border border-gray-200">
+                <h3 class="text-lg font-medium text-gray-800 mb-3">Next 7 Days Forecast</h3>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expected Demand</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Range</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                      {% for row in item.data %}
+                      <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {{ row.ds|date:"M j" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {{ row.yhat|floatformat:1 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {{ row.yhat_lower|floatformat:1 }} - {{ row.yhat_upper|floatformat:1 }}
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                <div class="mt-4 flex items-center text-sm text-gray-500">
+                  <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd" />
+                  </svg>
+                  Forecasts are estimates based on historical patterns
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

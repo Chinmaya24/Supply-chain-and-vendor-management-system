@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SupplyChain Hub{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- AlpineJS for interactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // This is crucial - tells Tailwind to use class-based dark mode
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","400":"#60a5fa","500":"#3b82f6","600":"#2563eb","700":"#1d4ed8","800":"#1e40af","900":"#1e3a8a"}
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Dark mode scrollbar */
+        .dark ::-webkit-scrollbar-track {
+            background: #1a202c;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-200" x-data="{ mobileMenuOpen: false, userMenuOpen: false }">
+    <!-- Navigation Bar -->
+    <nav class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Left side - Logo and main nav (desktop) -->
+                <div class="flex items-center">
+                    <!-- Mobile menu button -->
+                    <div class="flex md:hidden mr-2">
+                        <button @click="mobileMenuOpen = !mobileMenuOpen" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <span class="sr-only">Open main menu</span>
+                            <i class="fas fa-bars" x-show="!mobileMenuOpen"></i>
+                            <i class="fas fa-times" x-show="mobileMenuOpen"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Logo -->
+                    <a href="{% url 'home' %}" class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-boxes text-primary-600 dark:text-primary-400 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold bg-gradient-to-r from-primary-600 to-blue-500 dark:from-primary-400 dark:to-blue-400 bg-clip-text text-transparent">
+                            SupplyChain
+                        </span>
+                    </a>
+                    
+                    <!-- Primary Navigation (Desktop) -->
+                    <div class="hidden md:ml-8 md:flex md:items-center md:space-x-2">
+                                                {% if user.is_authenticated %}
+
+                        <a href="{% url 'home' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/' %}text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20{% else %}text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %} transition-colors">
+                            <i class="fas fa-home mr-2"></i> Home
+                        </a>
+                        {% endif %}
+                        
+                        {% if user.is_authenticated %}
+                        {% if user.role == "supplier" %}
+                        <a href="{% url 'forecast' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/analytics/' %}text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20{% else %}text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %} transition-colors">
+                            <i class="fas fa-chart-line mr-2"></i> Analytics
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                        {% if user.is_authenticated %}
+                        {% if user.role == "supplier" %}
+                        <a href="{% url 'supplier_orders' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/transactions/' %}text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20{% else %}text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %} transition-colors">
+                            <i class="fas fa-exchange-alt mr-2"></i> Transactions
+                        </a>
+                        {% endif %}
+                        {% if user.role == "vendor" %}
+                        <a href="{% url 'order_request' %}" class="px-3 py-2 rounded-md text-sm font-medium {% if request.path == '/transactions/' %}text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20{% else %}text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %} transition-colors">
+                            <i class="fas fa-exchange-alt mr-2"></i> Transactions
+                        {% endif %}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Right side - User controls -->
+                <div class="flex items-center">
+                    <!-- Search (desktop) -->
+                    <!-- <div class="hidden md:flex mr-4">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="Search...">
+                        </div>
+                    </div> -->
+                    
+                    <!-- Theme Toggle -->
+                    <button type="button" 
+        @click="document.documentElement.classList.toggle('dark'); localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'))" 
+        class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 mr-2">
+    <i class="fas fa-moon dark:hidden"></i>
+    <i class="fas fa-sun hidden dark:inline"></i>
+    <span class="sr-only">Toggle dark mode</span>
+</button>
+                    
+                    {% if user.is_authenticated %}
+                        <div class="flex items-center space-x-2">
+                            <!-- Notification -->
+                            <!-- <button class="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 relative">
+                                <span class="sr-only">View notifications</span>
+                                <i class="fas fa-bell text-lg"></i>
+                                <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900"></span>
+                            </button> -->
+                            
+                            <!-- User dropdown -->
+                            <div class="relative">
+                                <button @click="userMenuOpen = !userMenuOpen" class="flex items-center space-x-2 max-w-xs rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <div class="h-8 w-8 rounded-full bg-primary-600 dark:bg-primary-500 flex items-center justify-center text-white font-medium">
+                                        {% if user.first_name %}
+                                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                                        {% else %}
+                                            {{ user.username|first|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <span class="hidden md:inline-block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {% if user.first_name %}
+                                            {{ user.first_name }}
+                                        {% else %}
+                                            {{ user.username }}
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-down text-xs text-gray-400 hidden md:inline-block"></i>
+                                </button>
+                                
+                                <!-- Dropdown menu -->
+                                <div x-show="userMenuOpen" @click.away="userMenuOpen = false" 
+                                    class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50 animate-fade-in"
+                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="transform opacity-0 scale-95"
+                                    x-transition:enter-end="transform opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-75"
+                                    x-transition:leave-start="transform opacity-100 scale-100"
+                                    x-transition:leave-end="transform opacity-0 scale-95">
+                                    
+                                    <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                            {% if user.first_name %}
+                                                {{ user.first_name }} {{ user.last_name }}
+                                            {% else %}
+                                                {{ user.username }}
+                                            {% endif %}
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ user.email }}</p>
+                                    </div>
+                                    
+                                    {% if user.role == "supplier" %}
+                                        <a href="{% url 'supplier_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                            <i class="fas fa-truck mr-2"></i> Supplier Dashboard
+                                        </a>
+                                    {% elif user.role == "vendor" %}
+                                        <a href="{% url 'vendor_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                            <i class="fas fa-store mr-2"></i> Vendor Dashboard
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <!-- <a href="" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                        <i class="fas fa-user mr-2"></i> Your Profile
+                                    </a>
+                                    <a href="" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                        <i class="fas fa-cog mr-2"></i> Settings
+                                    </a> -->
+                                    <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> Sign out
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Auth buttons -->
+                        <div class="hidden md:flex items-center space-x-3">
+                            <a href="{% url 'login' %}" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                                Sign in
+                            </a>
+                            <a href="{% url 'signup' %}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                Get started <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div class="md:hidden" x-show="mobileMenuOpen" x-cloak>
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+                <!-- Mobile Search -->
+                <div class="px-3 mb-3">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm" placeholder="Search...">
+                    </div>
+                </div>
+                
+                <a href="{% url 'home' %}" class="block px-3 py-2 rounded-md text-base font-medium {% if request.path == '/' %}text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20{% else %}text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %}">
+                    <i class="fas fa-home mr-2"></i> Home
+                </a>
+                <a href="" class="block px-3 py-2 rounded-md text-base font-medium {% if request.path == '/network/' %}text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20{% else %}text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %}">
+                    <i class="fas fa-network-wired mr-2"></i> Network
+                </a>
+                <a href="" class="block px-3 py-2 rounded-md text-base font-medium {% if request.path == '/analytics/' %}text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20{% else %}text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %}">
+                    <i class="fas fa-chart-line mr-2"></i> Analytics
+                </a>
+                
+                {% if user.is_authenticated %}
+                    <a href="" class="block px-3 py-2 rounded-md text-base font-medium {% if request.path == '/transactions/' %}text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20{% else %}text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %}">
+                        <i class="fas fa-exchange-alt mr-2"></i> Transactions
+                    </a>
+                    
+                    <div class="pt-2 border-t border-gray-200 dark:border-gray-800">
+                        {% if user.role == "supplier" %}
+                            <a href="{% url 'supplier_dashboard' %}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                                <i class="fas fa-truck mr-2"></i> Dashboard
+                            </a>
+                        {% elif user.role == "vendor" %}
+                            <a href="{% url 'vendor_dashboard' %}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                                <i class="fas fa-store mr-2"></i> Dashboard
+                            </a>
+                        {% endif %}
+                        <a href="" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i class="fas fa-user mr-2"></i> Profile
+                        </a>
+                        <a href="" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i class="fas fa-cog mr-2"></i> Settings
+                        </a>
+                        <a href="{% url 'logout' %}" class="block px-3 py-2 rounded-md text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Sign out
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="pt-2 border-t border-gray-200 dark:border-gray-800">
+                        <a href="{% url 'login' %}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Sign in
+                        </a>
+                        <a href="{% url 'signup' %}" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-primary-600 hover:bg-primary-700">
+                            <i class="fas fa-user-plus mr-2"></i> Get started
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block messages %}
+            {% if messages %}
+                <div class="mb-6 space-y-2">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} shadow-lg animate-fade-in">
+                            <div>
+                                {% if message.tags == "success" %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif message.tags == "error" %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endblock %}
+        
+        {% block content %}
+        <!-- Content will be injected here by child templates -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-boxes text-primary-600 dark:text-primary-400 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold bg-gradient-to-r from-primary-600 to-blue-500 dark:from-primary-400 dark:to-blue-400 bg-clip-text text-transparent">
+                            SupplyChain
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        Connecting suppliers and vendors in a seamless marketplace ecosystem.
+                    </p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">
+                            <i class="fab fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Solutions</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Supplier Network</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Vendor Platform</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Inventory Management</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Analytics</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Company</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">About Us</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Careers</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Press</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Legal</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Privacy Policy</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Terms of Service</a></li>
+                        <li><a href="#" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <p class="text-xs text-gray-500 dark:text-gray-400 text-center">
+                    &copy; 2025 SupplyChain Hub DSATM. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 p-3 rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all">
+        <i class="fas fa-arrow-up"></i>
+        <span class="sr-only">Back to top</span>
+    </button>
+
+    <!-- Initialize dark mode from localStorage -->
+    <script>
+        // Initialize dark mode
+        function initDarkMode() {
+            // Check localStorage first
+            const darkMode = localStorage.getItem('darkMode');
+            
+            // If no preference in localStorage, check system preference
+            if (darkMode === null) {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.classList.toggle('dark', prefersDark);
+                localStorage.setItem('darkMode', prefersDark ? 'true' : 'false');
+            } else {
+                document.documentElement.classList.toggle('dark', darkMode === 'true');
+            }
+        }
+        
+        // Call the function on page load
+        initDarkMode();
+        
+        // Listen for system preference changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (localStorage.getItem('darkMode') === null) {
+                document.documentElement.classList.toggle('dark', e.matches);
+            }
+        });
+    
+        // Handle messages dismissal
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

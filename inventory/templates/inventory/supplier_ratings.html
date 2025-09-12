@@ -1,0 +1,130 @@
+{% extends "inventory/base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Your Ratings</h1>
+            <p class="text-gray-600 dark:text-gray-400">Feedback received from your vendors</p>
+        </div>
+        <div class="stats bg-base-200 dark:bg-base-300 shadow">
+            <div class="stat">
+                <div class="stat-title">Total Ratings</div>
+                <div class="stat-value">{{ ratings.count }}</div>
+                <div class="stat-desc">
+                    <div class="stat-desc">
+                        Average: {% if avg_rating %}{{ avg_rating|floatformat:1 }}{% else %}-{% endif %}/5
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if ratings %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for rating in ratings %}
+        <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
+            <div class="card-body">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="card-title text-lg">
+                            {{ rating.order.supplier_commodity.commodity.name }}
+                        </h2>
+                        <div class="text-sm text-gray-500">Order #{{ rating.order.id }}</div>
+                    </div>
+                    <div class="badge badge-neutral">{{ rating.created_at|date:"M d, Y" }}</div>
+                </div>
+
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="rating rating-md">
+                        {% for i in "12345" %}
+                            <input type="radio" 
+                                   class="mask mask-star-2 {% if forloop.counter <= rating.rating %}bg-yellow-400{% else %}bg-gray-300{% endif %}" 
+                                   disabled />
+                        {% endfor %}
+                    </div>
+                    <span class="font-semibold">{{ rating.rating }} star{{ rating.rating|pluralize }}</span>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2">
+                        <div class="avatar placeholder">
+                            <div class="bg-neutral text-neutral-content rounded-full w-8">
+                                <span>{{ rating.vendor.username|first|upper }}</span>
+                            </div>
+                        </div>
+                        <span>{{ rating.vendor.username }}</span>
+                    </div>
+
+                    {% if rating.comment %}
+                    <div class="mt-3">
+                        <div class="flex items-center gap-2 text-gray-500 mb-1">
+                            <i class="fas fa-comment"></i>
+                            <span class="font-medium">Vendor's Feedback</span>
+                        </div>
+                        <div class="bg-base-200 dark:bg-base-300 rounded-lg p-4">
+                            <p class="italic">"{{ rating.comment }}"</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card bg-base-100 shadow-sm max-w-md mx-auto">
+        <div class="card-body text-center py-12">
+            <i class="fas fa-star text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-600">No ratings yet</h3>
+            <p class="text-gray-500 mt-2">You haven't received any ratings from vendors</p>
+            <a href="{% url 'supplier_orders' %}" class="btn btn-primary mt-4">
+                <i class="fas fa-clipboard-list mr-2"></i> View Orders
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if ratings.has_other_pages %}
+    <div class="flex justify-center mt-8">
+        <div class="btn-group">
+            {% if ratings.has_previous %}
+            <a href="?page={{ ratings.previous_page_number }}" class="btn">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            {% for i in ratings.paginator.page_range %}
+            {% if ratings.number == i %}
+            <a class="btn btn-active">{{ i }}</a>
+            {% else %}
+            <a href="?page={{ i }}" class="btn">{{ i }}</a>
+            {% endif %}
+            {% endfor %}
+            
+            {% if ratings.has_next %}
+            <a href="?page={{ ratings.next_page_number }}" class="btn">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    .rating input[disabled] {
+        cursor: default;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
